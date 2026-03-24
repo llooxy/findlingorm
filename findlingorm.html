@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>找出小ling和小orm！</title>
+    <title>找出lingorm！</title>
     <style>
         body {
             font-family: sans-serif;
@@ -49,15 +49,15 @@
             transform: translateY(-2px);
             background: #5a67d8;
         }
-        /* 修改棋盘布局：改为块级网格 + 居中 */
+        /* 棋盘：块级网格，自动居中 */
         .board {
             display: grid;
             gap: 2px;
             background-color: #333;
             padding: 4px;
-            margin: 10px auto;      /* 水平居中 */
+            margin: 10px auto;
             border-radius: 8px;
-            width: fit-content;     /* 宽度自适应内容，保证居中效果 */
+            width: fit-content;
         }
         .cell {
             width: 45px;
@@ -88,18 +88,18 @@
             outline-offset: -2px;
             box-shadow: 0 0 0 2px rgba(255,215,0,0.5);
         }
-        .cell.cow-correct {
+        .cell.lingorm-correct {
             outline: 3px solid #ffd700;
             box-shadow: 0 0 10px rgba(255,215,0,0.5);
         }
-        /* 修改信息面板：改为块级元素，自适应宽度并居中 */
+        /* 信息面板：块级元素，独占一行，居中 */
         .info-panel {
-            margin: 20px auto;          /* 上下20px，左右auto实现居中 */
+            margin: 20px auto;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 10px;
-            display: block;              /* 改为块级，独占一行 */
-            width: fit-content;          /* 宽度根据内容收缩，配合margin auto居中 */
+            display: block;
+            width: fit-content;
             min-width: 300px;
             box-sizing: border-box;
         }
@@ -142,7 +142,6 @@
         .shake {
             animation: shake 0.3s ease-in-out;
         }
-        /* 自定义弹窗 */
         .modal {
             display: none;
             position: fixed;
@@ -186,7 +185,6 @@
                 height: 35px;
                 font-size: 18px;
             }
-            /* 保证移动端信息面板仍居中且不溢出 */
             .info-panel {
                 width: auto;
                 max-width: 90vw;
@@ -197,7 +195,7 @@
 </head>
 <body>
 <div class="container">
-    <h2>🎉 FindLingorm 🎉</h2>
+    <h2>找出小ling和小orm吧！</h2>
     <div class="controls">
         <label>棋盘大小选择 </label>
         <select id="sizeSelect">
@@ -222,13 +220,11 @@
         <div class="legend">
             <div class="legend-item">❌ = 验证错误（消耗机会）</div>
             <div class="legend-item">✖️ = 手动标记（不消耗机会）</div>
-            <div class="legend-item">⭐ = 金色边框 = 正确答案</div>
-            <div class="legend-item">🔽 提示：每一个颜色格子有一个小ling小orm，每行每列只有一个小ling小orm，每个小ling小orm周围没有其他的小ling小orm</div>
+            <div class="legend-item">🔽 提示：每个颜色只有一个格子每行每列均只有一个小ling或小orm，每个小ling小orm周围格子没有其他小ling或小orm</div>
         </div>
     </div>
 </div>
 
-<!-- 自定义弹窗 -->
 <div id="customModal" class="modal">
     <div class="modal-content">
         <h3 id="modalTitle"></h3>
@@ -238,25 +234,24 @@
 </div>
 
 <script>
-    // ==================== 图片资源 ====================
-    // 可以替换这里的图片地址为您的本地或网络图片
-    const COW_IMAGES = [
+    // ========== 图片资源（请替换为实际图片地址）==========
+    const lingorm_IMAGES = [
         "ling1.png",
         "ling2.png",
         "orm1.png",
         "orm2.png"
     ];
-    // 确保图片可用，如果网络图片无法加载可替换为本地路径
+    // 如果图片加载失败，会自动显示文本 🎉，不影响游戏
 
-    // ==================== 游戏状态 ====================
+    // ========== 游戏状态 ==========
     let N = 5;
-    let cowPositions = [];          // {row, col}
-    let cowImagesMap = [];          // 每个小ling小orm对应的图片URL（按索引）
-    let colorGrid = [];             // 颜色编号
-    let playerChoices = [];         // 玩家最终选择（验证正确自动加入）
-    let manualMarks = [];           // 手动标记的✖️
-    let verifiedWrong = [];         // 双击验证错误的格子（❌）
-    let verifiedCorrect = [];       // 双击验证正确的格子（存储行列）
+    let lingormPositions = [];          // 每个照片的位置 {row, col}
+    let lingormImagesMap = [];          // 每个照片对应的图片地址
+    let colorGrid = [];             // 颜色编号网格
+    let playerChoices = [];         // 玩家最终选择（正确时自动填入）
+    let manualMarks = [];           // 手动标记 ✖️
+    let verifiedWrong = [];         // 验证错误的格子 ❌
+    let verifiedCorrect = [];       // 验证正确的格子（存储行列）
     let attemptsLeft = 3;
     let gameActive = true;
     let selectedCell = null;
@@ -272,23 +267,19 @@
     const modalMessage = document.getElementById('modalMessage');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
 
-    // 显示自定义弹窗
     function showModal(title, message) {
         modalTitle.textContent = title;
         modalMessage.textContent = message;
         modal.style.display = 'flex';
     }
-
     function closeModal() {
         modal.style.display = 'none';
     }
     modalCloseBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeModal();
-    });
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-    // ==================== 核心生成算法 ====================
-    function generateCows() {
+    // ----- 核心算法（保持原逻辑）-----
+    function generatelingorms() {
         while (true) {
             let perm = [...Array(N).keys()];
             for (let i = perm.length - 1; i > 0; i--) {
@@ -302,42 +293,32 @@
                     break;
                 }
             }
-            if (valid) {
-                return perm.map((col, row) => ({ row, col }));
-            }
+            if (valid) return perm.map((col, row) => ({ row, col }));
         }
     }
 
-    // 为格子随机分配一张图片
-    function assignCowImages(cows) {
-        return cows.map(() => {
-            const randomIndex = Math.floor(Math.random() * COW_IMAGES.length);
-            return COW_IMAGES[randomIndex];
-        });
+    function assignlingormImages(lingorms) {
+        return lingorms.map(() => lingorm_IMAGES[Math.floor(Math.random() * lingorm_IMAGES.length)]);
     }
 
     function neighbors(row, col) {
         const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
         const res = [];
         for (let [dr, dc] of dirs) {
-            let nr = row + dr, nc = col + dc;
+            const nr = row + dr, nc = col + dc;
             if (nr >= 0 && nr < N && nc >= 0 && nc < N) res.push([nr, nc]);
         }
         return res;
     }
 
-    function generateColorRegions(cows, specialColor = 0) {
+    function generateColorRegions(lingorms, specialColor = 0) {
         let grid = Array(N).fill().map(() => Array(N).fill(-1));
-        for (let i = 0; i < cows.length; i++) {
-            let {row, col} = cows[i];
-            grid[row][col] = i;
-        }
+        lingorms.forEach(({row, col}, idx) => { grid[row][col] = idx; });
 
         let queue = [];
         for (let i = 0; i < N; i++) {
             for (let j = 0; j < N; j++) {
-                if (grid[i][j] !== -1) {
-                    if (grid[i][j] === specialColor) continue;
+                if (grid[i][j] !== -1 && grid[i][j] !== specialColor) {
                     for (let [nr, nc] of neighbors(i, j)) {
                         if (grid[nr][nc] === -1 && !queue.some(p => p[0]===nr && p[1]===nc)) {
                             queue.push([nr, nc]);
@@ -348,22 +329,18 @@
         }
 
         while (queue.length) {
-            let idx = Math.floor(Math.random() * queue.length);
-            let [r, c] = queue[idx];
+            const idx = Math.floor(Math.random() * queue.length);
+            const [r, c] = queue[idx];
             queue.splice(idx, 1);
-
-            let colorSet = new Set();
+            const colorSet = new Set();
             for (let [nr, nc] of neighbors(r, c)) {
                 if (grid[nr][nc] !== -1) colorSet.add(grid[nr][nc]);
             }
             if (colorSet.size === 0) continue;
             if (colorSet.has(specialColor)) colorSet.delete(specialColor);
             if (colorSet.size === 0) continue;
-
-            let colors = Array.from(colorSet);
-            let chosen = colors[Math.floor(Math.random() * colors.length)];
+            const chosen = Array.from(colorSet)[Math.floor(Math.random() * colorSet.size)];
             grid[r][c] = chosen;
-
             for (let [nr, nc] of neighbors(r, c)) {
                 if (grid[nr][nc] === -1 && !queue.some(p => p[0]===nr && p[1]===nc)) {
                     queue.push([nr, nc]);
@@ -371,11 +348,11 @@
             }
         }
 
-        // 填充剩余未着色格子（理论上不会，但保险）
+        // 填充遗漏格子
         for (let i = 0; i < N; i++) {
             for (let j = 0; j < N; j++) {
                 if (grid[i][j] === -1) {
-                    let neighborColors = [];
+                    const neighborColors = [];
                     for (let [nr, nc] of neighbors(i, j)) {
                         if (grid[nr][nc] !== -1) neighborColors.push(grid[nr][nc]);
                     }
@@ -386,23 +363,22 @@
         return grid;
     }
 
-    // 检查胜利条件
     function checkWin() {
-        let regionHasCow = new Array(N).fill(false);
+        const regionHaslingorm = new Array(N).fill(false);
         for (let r = 0; r < N; r++) {
             for (let c = 0; c < N; c++) {
                 if (playerChoices[r][c]) {
-                    let color = colorGrid[r][c];
-                    if (regionHasCow[color]) return false;
-                    regionHasCow[color] = true;
+                    const color = colorGrid[r][c];
+                    if (regionHaslingorm[color]) return false;
+                    regionHaslingorm[color] = true;
                 }
             }
         }
-        if (regionHasCow.some(v => !v)) return false;
+        if (regionHaslingorm.some(v => !v)) return false;
 
-        let rowCount = new Array(N).fill(0);
-        let colCount = new Array(N).fill(0);
-        let positions = [];
+        const rowCount = new Array(N).fill(0);
+        const colCount = new Array(N).fill(0);
+        const positions = [];
         for (let r = 0; r < N; r++) {
             for (let c = 0; c < N; c++) {
                 if (playerChoices[r][c]) {
@@ -414,39 +390,28 @@
         }
         if (rowCount.some(v => v !== 1)) return false;
         if (colCount.some(v => v !== 1)) return false;
-
         for (let i = 0; i < positions.length; i++) {
             for (let j = i+1; j < positions.length; j++) {
-                let dr = Math.abs(positions[i][0] - positions[j][0]);
-                let dc = Math.abs(positions[i][1] - positions[j][1]);
+                const dr = Math.abs(positions[i][0] - positions[j][0]);
+                const dc = Math.abs(positions[i][1] - positions[j][1]);
                 if (dr <= 1 && dc <= 1) return false;
             }
         }
         return true;
     }
 
-    // 双击验证
+    // ----- 交互逻辑 -----
     function onDoubleClick(e, row, col) {
         if (e) e.preventDefault();
-        if (!gameActive) {
-            showMessage("游戏已结束，请开始新游戏！", "error");
-            return;
-        }
-        if (verifiedCorrect.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认有小ling小orm了！", "error");
-            return;
-        }
-        if (verifiedWrong.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认没有小ling小orm了！", "error");
-            return;
-        }
+        if (!gameActive) { showMessage("游戏已结束，请开始新游戏！", "error"); return; }
+        if (verifiedCorrect.some(p => p.row === row && p.col === col)) { showMessage("这个格子已经确认有lingorm了！", "error"); return; }
+        if (verifiedWrong.some(p => p.row === row && p.col === col)) { showMessage("这个格子已经确认没lingorm了！", "error"); return; }
 
-        const cowIndex = cowPositions.findIndex(cow => cow.row === row && cow.col === col);
-        const hasCow = cowIndex !== -1;
+        const lingormIndex = lingormPositions.findIndex(lingorm => lingorm.row === row && lingorm.col === col);
+        const haslingorm = lingormIndex !== -1;
 
-        if (hasCow) {
+        if (haslingorm) {
             verifiedCorrect.push({ row, col });
-            // 自动加入玩家选择（移除同颜色区域的其他选择）
             const color = colorGrid[row][col];
             for (let r = 0; r < N; r++) {
                 for (let c = 0; c < N; c++) {
@@ -457,20 +422,17 @@
                 }
             }
             playerChoices[row][col] = true;
-            showMessage(`✅ 正确！格子 (${row+1},${col+1}) 有小ling小orm！`, "success");
+            showMessage(`✅ 正确！格子 (${row+1},${col+1}) 有lingorm！`, "success");
             if (checkWin()) {
                 gameActive = false;
-                showModal("🎉 胜利！", "恭喜你找到所有小ling小orm，游戏胜利！");
+                showModal("🎉 胜利！", "恭喜你找到所有lingorm，游戏胜利！");
                 showMessage("🎉 胜利！ 🎉", "success");
             }
         } else {
-            if (attemptsLeft <= 0) {
-                showMessage("已经没有试错机会了！请开始新游戏。", "error");
-                return;
-            }
+            if (attemptsLeft <= 0) { showMessage("已经没有试错机会了！请开始新游戏。", "error"); return; }
             attemptsLeft--;
             verifiedWrong.push({ row, col });
-            showMessage(`❌ 错误！格子 (${row+1},${col+1}) 没有小ling小orm。剩余机会: ${attemptsLeft}`, "error");
+            showMessage(`❌ 错误！格子 (${row+1},${col+1}) 没有lingorm。剩余机会: ${attemptsLeft}`, "error");
             boardDiv.classList.add('shake');
             setTimeout(() => boardDiv.classList.remove('shake'), 300);
             if (attemptsLeft === 0) {
@@ -483,24 +445,14 @@
         render();
     }
 
-    // 单击手动标记
     function onSingleClick(row, col) {
-        if (!gameActive) {
-            showMessage("游戏已结束，请开始新游戏！", "error");
-            return;
-        }
-        if (verifiedCorrect.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认有小ling小orm，不能标记", "error");
-            return;
-        }
-        if (verifiedWrong.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经验证过没有小ling小orm，不能再标记", "error");
-            return;
-        }
+        if (!gameActive) { showMessage("游戏已结束，请开始新游戏！", "error"); return; }
+        if (verifiedCorrect.some(p => p.row === row && p.col === col)) { showMessage("这个格子已经确认有lingorm，不能标记", "error"); return; }
+        if (verifiedWrong.some(p => p.row === row && p.col === col)) { showMessage("这个格子已经验证过没有lingorm，不能再标记", "error"); return; }
         const index = manualMarks.findIndex(m => m.row === row && m.col === col);
         if (index === -1) {
             manualMarks.push({ row, col });
-            showMessage(`✖️ 标记格子 (${row+1},${col+1}) 为无小ling小orm`, "info");
+            showMessage(`✖️ 标记格子 (${row+1},${col+1}) 为无lingorm`, "info");
         } else {
             manualMarks.splice(index, 1);
             showMessage(`取消标记格子 (${row+1},${col+1})`, "info");
@@ -508,7 +460,6 @@
         render();
     }
 
-    // 双击/单击区分
     let clickTimer = null;
     let lastClick = { row: null, col: null, time: 0 };
     function onCellClick(e, row, col) {
@@ -542,9 +493,8 @@
         attemptsSpan.textContent = attemptsLeft;
     }
 
-    // 渲染网格，支持图片
+    // ----- 渲染（图片加载失败时自动显示🎉文本）-----
     function render() {
-        // 动态设置网格列数（保持每列45px，但使用grid布局时由CSS的grid-template-columns控制）
         boardDiv.style.gridTemplateColumns = `repeat(${N}, 45px)`;
         boardDiv.innerHTML = '';
         for (let i = 0; i < N; i++) {
@@ -555,21 +505,20 @@
                 const hue = (colorIdx * 37) % 360;
                 cell.style.backgroundColor = `hsl(${hue}, 70%, 70%)`;
 
-                // 判断显示内容
                 const isVerifiedCorrect = verifiedCorrect.some(p => p.row === i && p.col === j);
                 const isVerifiedWrong = verifiedWrong.some(p => p.row === i && p.col === j);
                 const isManualMark = manualMarks.some(p => p.row === i && p.col === j);
                 const isPlayerChoice = playerChoices[i][j];
 
                 if (isVerifiedCorrect) {
-                    // 显示图片：找到对应小ling小orm的图片URL
-                    const cowIndex = cowPositions.findIndex(cow => cow.row === i && cow.col === j);
-                    const imgUrl = cowImagesMap[cowIndex];
+                    const lingormIdx = lingormPositions.findIndex(lingorm => lingorm.row === i && lingorm.col === j);
+                    const imgUrl = lingormImagesMap[lingormIdx];
                     const img = document.createElement('img');
                     img.src = imgUrl;
                     img.alt = "🎉";
+                    img.onerror = () => { img.remove(); cell.textContent = '🎉'; };
                     cell.appendChild(img);
-                    cell.classList.add('cow-correct');
+                    cell.classList.add('lingorm-correct');
                 } else if (isVerifiedWrong) {
                     cell.textContent = '❌';
                     cell.style.fontSize = '24px';
@@ -579,11 +528,9 @@
                     cell.style.opacity = '0.7';
                 } else if (isPlayerChoice) {
                     cell.textContent = '🎉';
-                }yanhua
-
-                if (selectedCell && selectedCell.row === i && selectedCell.col === j) {
-                    cell.classList.add('selected');
                 }
+
+                if (selectedCell && selectedCell.row === i && selectedCell.col === j) cell.classList.add('selected');
                 if (!gameActive && !isVerifiedCorrect) {
                     cell.style.opacity = '0.6';
                     cell.style.cursor = 'not-allowed';
@@ -602,13 +549,13 @@
         }
     }
 
-    // 重置游戏（根据当前 N）
+    // ----- 重置游戏 -----
     function resetGame() {
         N = parseInt(sizeSelect.value, 10);
-        cowPositions = generateCows();
-        cowImagesMap = assignCowImages(cowPositions);   // 为每个小ling小orm分配随机图片
+        lingormPositions = generatelingorms();
+        lingormImagesMap = assignlingormImages(lingormPositions);
         const singleColor = Math.floor(Math.random() * N);
-        colorGrid = generateColorRegions(cowPositions, singleColor);
+        colorGrid = generateColorRegions(lingormPositions, singleColor);
         playerChoices = Array(N).fill().map(() => Array(N).fill(false));
         manualMarks = [];
         verifiedWrong = [];
@@ -621,13 +568,8 @@
         showMessage(`新游戏开始！n=${N}，剩余 ${attemptsLeft} 次试错机会。`, "success");
     }
 
-    function newGame() {
-        resetGame();
-    }
-
-    function changeSize() {
-        resetGame();
-    }
+    function newGame() { resetGame(); }
+    function changeSize() { resetGame(); }
 
     sizeSelect.addEventListener('change', changeSize);
     newGameBtn.addEventListener('click', newGame);
