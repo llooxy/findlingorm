@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>小牛谜题 - 图片版</title>
+    <title>找出所有lingorm！</title>
     <style>
         body {
             font-family: sans-serif;
@@ -186,7 +186,7 @@
 </head>
 <body>
 <div class="container">
-    <h2>🐮 小牛谜题 - 图片版 🐮</h2>
+    <h2>🎇 lingorm谜题 - 图片版 🎇</h2>
     <div class="controls">
         <label>棋盘大小 n = </label>
         <select id="sizeSelect">
@@ -209,11 +209,8 @@
         </div>
         <div id="message" class="message">💡 单击标记✖️，双击验证（错误会消耗机会）</div>
         <div class="legend">
-            <div class="legend-item">🐮 = 玩家猜测（文本）</div>
-            <div class="legend-item">🐮图片 = 已验证正确的小牛</div>
             <div class="legend-item">❌ = 验证错误（消耗机会）</div>
             <div class="legend-item">✖️ = 手动标记（不消耗机会）</div>
-            <div class="legend-item">⭐ = 金色边框 = 正确答案</div>
             <div class="legend-item">🔽 提示：每局有一个颜色只有一个格子，方便起步</div>
         </div>
     </div>
@@ -242,7 +239,7 @@
     // ==================== 游戏状态 ====================
     let N = 5;
     let cowPositions = [];          // {row, col}
-    let cowImagesMap = [];          // 每个小牛对应的图片URL（按索引）
+    let cowImagesMap = [];          // 每个对应的图片URL（按索引）
     let colorGrid = [];             // 颜色编号
     let playerChoices = [];         // 玩家最终选择（验证正确自动加入）
     let manualMarks = [];           // 手动标记的✖️
@@ -299,7 +296,7 @@
         }
     }
 
-    // 为每个小牛随机分配一张图片
+    // 为格子随机分配一张图片
     function assignCowImages(cows) {
         return cows.map(() => {
             const randomIndex = Math.floor(Math.random() * COW_IMAGES.length);
@@ -424,11 +421,11 @@
             return;
         }
         if (verifiedCorrect.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认有小牛了！", "error");
+            showMessage("这个格子已经确认有lingorm了！", "error");
             return;
         }
         if (verifiedWrong.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认没有小牛了！", "error");
+            showMessage("这个格子已经确认没有lingorm了！", "error");
             return;
         }
 
@@ -448,10 +445,10 @@
                 }
             }
             playerChoices[row][col] = true;
-            showMessage(`✅ 正确！格子 (${row+1},${col+1}) 有小牛！`, "success");
+            showMessage(`✅ 正确！格子 (${row+1},${col+1}) 有lingorm！`, "success");
             if (checkWin()) {
                 gameActive = false;
-                showModal("🎉 胜利！", "恭喜你找到所有小牛，游戏胜利！");
+                showModal("🎉 胜利！", "恭喜你找到所有lingorm，游戏胜利！");
                 showMessage("🎉 胜利！ 🎉", "success");
             }
         } else {
@@ -461,7 +458,7 @@
             }
             attemptsLeft--;
             verifiedWrong.push({ row, col });
-            showMessage(`❌ 错误！格子 (${row+1},${col+1}) 没有小牛。剩余机会: ${attemptsLeft}`, "error");
+            showMessage(`❌ 错误！格子 (${row+1},${col+1}) 没有lingorm。剩余机会: ${attemptsLeft}`, "error");
             boardDiv.classList.add('shake');
             setTimeout(() => boardDiv.classList.remove('shake'), 300);
             if (attemptsLeft === 0) {
@@ -481,17 +478,17 @@
             return;
         }
         if (verifiedCorrect.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认有小牛，不能标记", "error");
+            showMessage("这个格子已经确认有lingorm，不能标记", "error");
             return;
         }
         if (verifiedWrong.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经验证过没有小牛，不能再标记", "error");
+            showMessage("这个格子已经验证过没有lingorm，不能再标记", "error");
             return;
         }
         const index = manualMarks.findIndex(m => m.row === row && m.col === col);
         if (index === -1) {
             manualMarks.push({ row, col });
-            showMessage(`✖️ 标记格子 (${row+1},${col+1}) 为无小牛`, "info");
+            showMessage(`✖️ 标记格子 (${row+1},${col+1}) 为无lingorm`, "info");
         } else {
             manualMarks.splice(index, 1);
             showMessage(`取消标记格子 (${row+1},${col+1})`, "info");
@@ -552,12 +549,12 @@
                 const isPlayerChoice = playerChoices[i][j];
 
                 if (isVerifiedCorrect) {
-                    // 显示图片：找到对应小牛的图片URL
+                    // 显示图片：找到对应lingorm的图片URL
                     const cowIndex = cowPositions.findIndex(cow => cow.row === i && cow.col === j);
                     const imgUrl = cowImagesMap[cowIndex];
                     const img = document.createElement('img');
                     img.src = imgUrl;
-                    img.alt = "🐮";
+                    img.alt = "🎇";
                     cell.appendChild(img);
                     cell.classList.add('cow-correct');
                 } else if (isVerifiedWrong) {
@@ -568,7 +565,7 @@
                     cell.style.fontSize = '24px';
                     cell.style.opacity = '0.7';
                 } else if (isPlayerChoice) {
-                    cell.textContent = '🐮';
+                    cell.textContent = '🎇';
                 }
 
                 if (selectedCell && selectedCell.row === i && selectedCell.col === j) {
@@ -596,7 +593,7 @@
     function resetGame() {
         N = parseInt(sizeSelect.value, 10);
         cowPositions = generateCows();
-        cowImagesMap = assignCowImages(cowPositions);   // 为每个小牛分配随机图片
+        cowImagesMap = assignCowImages(cowPositions);   // 为每个lingorm分配随机图片
         const singleColor = Math.floor(Math.random() * N);
         colorGrid = generateColorRegions(cowPositions, singleColor);
         playerChoices = Array(N).fill().map(() => Array(N).fill(false));
