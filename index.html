@@ -6,7 +6,6 @@
     <title>找出lingorm！</title>
     <style>
         * {
-            /* 禁用双击缩放行为 (移动端关键) */
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
@@ -94,94 +93,18 @@
             background: #5a67d8;
         }
 
-        /* 棋盘区域 - 支持横向滑动 + 自适应手指触碰 */
-        .board {
-            display: grid;
-            gap: 2px;
-            background-color: #2d3748;
-            padding: 4px;
-            margin: 12px auto;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 100%;
-        }
-
-        /* 网格单元 - 正方形，触控友好 */
-        .cell {
-	    aspect-ratio: 1 / 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            font-weight: bold;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.1s ease;
-            background-color: #f9f7f5;
-            border-radius: 12px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.05);
-			-webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-
-        .cell img {
-            width: 90%;
-            height: 90%;
-            object-fit: contain;
-            pointer-events: none;
-            border-radius: 8px;
-        }
-
-        .cell:active {
-            background-color: #e9eef3;
-        }
-
-        .cell.selected {
-            outline: 3px solid #ffb347;
-            outline-offset: -2px;
-            box-shadow: 0 0 0 3px rgba(255,180,71,0.5);
-        }
-
-        .cell.lingorm-correct {
-            outline: 3px solid #ffd966;
-            box-shadow: 0 0 0 3px rgba(255,217,102,0.5);
-            background: #fff6e0;
-        }
-
-        /* 信息面板 */
-        .info-panel {
-            margin: 18px auto 8px auto;
-            padding: 12px 14px;
+        /* 顶部信息区（消息+图例） */
+        .info-top {
             background: #f8fafc;
-            border-radius: 32px;
-            display: block;
-            width: fit-content;
-            min-width: 260px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        .attempts {
-            font-size: 1.3rem;
-            margin: 6px 0;
-            padding: 8px 12px;
-            background: white;
-            border-radius: 60px;
-            display: inline-block;
-            font-weight: 600;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        }
-
-        .attempts span {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #e53e3e;
-            margin-left: 6px;
+            border-radius: 28px;
+            padding: 12px 14px;
+            margin: 10px 0 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .message {
             font-size: 0.85rem;
-            margin: 10px 0 8px;
+            margin: 0 0 12px 0;
             padding: 10px 12px;
             border-radius: 40px;
             background: #eef2ff;
@@ -201,8 +124,8 @@
         }
 
         .legend {
-            margin-top: 14px;
-            font-size: 0.7rem;
+            margin-top: 6px;
+            font-size: 0.85rem;
             color: #4b5563;
             text-align: center;
             display: flex;
@@ -221,7 +144,63 @@
             font-weight: 500;
         }
 
-        /* 震动动画 */
+        /* 棋盘区域 - 无滚动条，固定比例 */
+        .board {
+            display: grid;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 4px;
+            margin: 12px auto;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        /* 网格单元 - 正方形，无缩放动画 */
+        .cell {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.1s ease;
+            background-color: #f9f7f5;
+            border-radius: 12px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .cell:active {
+            background-color: #e0e7f0;
+            /* 无 transform，无尺寸变化 */
+        }
+
+        .cell img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+            pointer-events: none;
+            border-radius: 8px;
+        }
+
+        .cell.selected {
+            outline: 3px solid #ffb347;
+            outline-offset: -2px;
+            box-shadow: 0 0 0 3px rgba(255,180,71,0.5);
+        }
+
+        .cell.lingorm-correct {
+            outline: 3px solid #ffd966;
+            box-shadow: 0 0 0 3px rgba(255,217,102,0.5);
+            background: #fff6e0;
+        }
+
+        /* 震动动画仅用于错误 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -283,18 +262,28 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* 滚动提示小标志 */
-        .scroll-hint {
-            font-size: 0.7rem;
-            color: #4a5568;
-            background: #e2e8f0b3;
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 40px;
-            margin-top: 6px;
-            backdrop-filter: blur(2px);
+        /* 手机适配：保持正方形自适应 */
+        @media (max-width: 550px) {
+            .cell {
+                font-size: 22px;
+            }
+            .controls select, .controls button {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
         }
 
+        @media (max-width: 450px) {
+            .cell {
+                font-size: 20px;
+            }
+            .info-top {
+                padding: 8px 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -317,22 +306,20 @@
         <button id="newGameBtn">✨ 新游戏</button>
     </div>
 
-	<div id="board" class="board"></div>
-	<div class="scroll-hint">查看完整棋盘</div>
-
-    <div class="info-panel">
-        <div id="message" class="message">💡 单击可标记✖️，双击验证（如果错误会消耗机会）</div>
-        <div class="legend">
-            <div class="legend-item">💡 单击标记❌，双击验证（错误会消耗机会）</div>
-			<div class="legend-item">❌ 已验证无lingorm</div>
-            <div class="legend-item">✖️ 手动标记（安全）</div>
-            <div class="legend-item">🎉 已找到的lingorm</div>
-        </div>
-        <div class="legend" style="font-size:0.65rem; background:transparent; padding-top:0">
+    <!-- 顶部信息区：消息提示 + 图例 -->
+    <div class="info-top">
+	<div class="legend" style="font-size:0.90rem; background:transparent; padding-top:0">
             📌 每行/列/颜色块仅有一个小ling或小orm，每个小ling或小orm周围一圈都没有其他小ling或小orm哦
+        </div>
+        <div id="message" class="message">💡 可以单击手动标记✖️记录，双击验证（错误会消耗机会）</div>
+        <div class="legend">
+            <div class="legend-item">❌ 已验证错误无lingorm</div>
+            <div class="legend-item">✖️ 手动标记无小ling或小orm</div>
         </div>
     </div>
 
+    <!-- 棋盘区域 -->
+    <div id="board" class="board"></div>
 </div>
 
 <div id="customModal" class="modal">
@@ -368,7 +355,6 @@
     // DOM 元素
     const sizeSelect = document.getElementById('sizeSelect');
     const newGameBtn = document.getElementById('newGameBtn');
-    const attemptsSpan = document.getElementById('attemptsCount');
     const boardDiv = document.getElementById('board');
     const messageDiv = document.getElementById('message');
     const modal = document.getElementById('customModal');
@@ -398,7 +384,7 @@
     }
 
     function updateAttemptsDisplay() {
-        attemptsSpan.textContent = attemptsLeft;
+        // 已移除剩余机会显示，此函数仅用于内部状态更新，不渲染UI
     }
 
     // ---------- 核心生成算法（保持原逻辑，确保规则严谨）----------
@@ -524,7 +510,7 @@
         return true;
     }
 
-    // ---------- 交互逻辑（触控双击优化，已全局禁用双击缩放）----------
+    // ---------- 交互逻辑（触控双击优化）----------
     function onDoubleClickEvent(e, row, col) {
         if (e) {
             e.preventDefault();
@@ -553,14 +539,14 @@
             showMessage(`✅ 正确！(${row+1},${col+1}) 找到了lingorm！`, "success");
             if (checkWin()) {
                 gameActive = false;
-                showModal("🎉 胜利！", "找到了所有lingorm，推理满分！");
+                showModal("🎉 胜利！", "恭喜你找到所有小ling小orm，推理满分！");
                 showMessage("🎉 胜利！游戏通关 🎉", "success");
             }
         } else {
             if (attemptsLeft <= 0) { showMessage("已经没有试错机会了，开新局吧", "error"); return; }
             attemptsLeft--;
             verifiedWrong.push({ row, col });
-            showMessage(`❌ 错误！(${row+1},${col+1}) 没有lingorm，剩余试错机会: ${attemptsLeft}`, "error");
+            showMessage(`❌ 错误！(${row+1},${col+1}) 没有lingorm，剩余机会: ${attemptsLeft}`, "error");
             boardDiv.classList.add('shake');
             setTimeout(() => boardDiv.classList.remove('shake'), 300);
             if (attemptsLeft === 0) {
@@ -588,15 +574,14 @@
         render();
     }
 
-    // 移动端优雅区分单击/双击 (使用timer)
+    // 移动端区分单击/双击 (无页面抖动)
     let clickTimer = null;
     let lastClick = { row: null, col: null, time: 0 };
     function onCellTap(e, row, col) {
-        e.preventDefault();    // 避免任何潜在的缩放/菜单
+        e.preventDefault();
         const now = Date.now();
         const timeDiff = now - lastClick.time;
         if (lastClick.row === row && lastClick.col === col && timeDiff < 300) {
-            // 双击验证
             clearTimeout(clickTimer);
             onDoubleClickEvent(e, row, col);
             lastClick = { row: null, col: null, time: 0 };
@@ -612,10 +597,9 @@
         render();
     }
 
-    // ---------- 渲染（自适应网格，图片fallback）----------
+    // ---------- 渲染（正方形自适应，无滚动条）----------
     function render() {
-        // 设置动态列宽（固定最小宽度保证点击区域，同时允许横向滚动）
-        const minCellSize = 42;
+        // 使用 fr 单位让格子自适应容器宽度，保持正方形由 aspect-ratio 保证
         boardDiv.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
         boardDiv.innerHTML = '';
         for (let i = 0; i < N; i++) {
@@ -658,7 +642,6 @@
                     cell.style.cursor = 'default';
                 }
 
-                // 绑定触控事件 (移动端+PC统一使用click但touch有preventDefault)
                 cell.addEventListener('click', (function(r, c) {
                     return function(e) {
                         e.preventDefault();
@@ -685,7 +668,7 @@
         manualMarks = [];
         verifiedWrong = [];
         verifiedCorrect = [];
-        attemptsLeft = Math.max(2, N - 2);   // 难度合理剩余机会，N越大机会稍多
+        attemptsLeft = Math.max(2, N - 2);
         gameActive = true;
         selectedCell = null;
         updateAttemptsDisplay();
@@ -699,11 +682,6 @@
     sizeSelect.addEventListener('change', changeSize);
     newGameBtn.addEventListener('click', newGame);
     resetGame();
-
-    // 额外确保触摸时页面无缩放滚动冲突 (touchmove不干扰棋盘点击)
-    document.body.addEventListener('touchmove', function(e) {
-        // 不干涉滚动，但允许自然滚动，只防止缩放由CSS完成
-    }, { passive: false });
 </script>
 </body>
 </html>
