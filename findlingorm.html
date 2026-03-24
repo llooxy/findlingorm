@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>找出所有lingorm！</title>
+    <title>找出小ling和小orm！</title>
     <style>
         body {
             font-family: sans-serif;
@@ -20,8 +20,6 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             max-width: 95vw;
             overflow-x: auto;
-            margin: 0 auto;           /* 水平居中 */
-            display: block; 
         }
         h2 {
             margin: 0 0 10px 0;
@@ -51,14 +49,15 @@
             transform: translateY(-2px);
             background: #5a67d8;
         }
+        /* 修改棋盘布局：改为块级网格 + 居中 */
         .board {
-            display: inline-grid;
+            display: grid;
             gap: 2px;
             background-color: #333;
             padding: 4px;
-            margin: 10px auto;        /* 水平居中 */
+            margin: 10px auto;      /* 水平居中 */
             border-radius: 8px;
-            justify-self: center;     /* 备用居中 */
+            width: fit-content;     /* 宽度自适应内容，保证居中效果 */
         }
         .cell {
             width: 45px;
@@ -93,13 +92,16 @@
             outline: 3px solid #ffd700;
             box-shadow: 0 0 10px rgba(255,215,0,0.5);
         }
+        /* 修改信息面板：改为块级元素，自适应宽度并居中 */
         .info-panel {
-            margin: 20px 0;
+            margin: 20px auto;          /* 上下20px，左右auto实现居中 */
             padding: 15px;
             background: #f8f9fa;
             border-radius: 10px;
-            display: inline-block;
+            display: block;              /* 改为块级，独占一行 */
+            width: fit-content;          /* 宽度根据内容收缩，配合margin auto居中 */
             min-width: 300px;
+            box-sizing: border-box;
         }
         .attempts {
             font-size: 24px;
@@ -184,14 +186,20 @@
                 height: 35px;
                 font-size: 18px;
             }
+            /* 保证移动端信息面板仍居中且不溢出 */
+            .info-panel {
+                width: auto;
+                max-width: 90vw;
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>🎇 lingorm谜题 - 图片版 🎇</h2>
+    <h2>🎉 FindLingorm 🎉</h2>
     <div class="controls">
-        <label>棋盘大小 n = </label>
+        <label>棋盘大小选择 </label>
         <select id="sizeSelect">
             <option value="4">4</option>
             <option value="5" selected>5</option>
@@ -214,7 +222,8 @@
         <div class="legend">
             <div class="legend-item">❌ = 验证错误（消耗机会）</div>
             <div class="legend-item">✖️ = 手动标记（不消耗机会）</div>
-            <div class="legend-item">🔽 提示：每局有一个颜色只有一个格子，方便起步</div>
+            <div class="legend-item">⭐ = 金色边框 = 正确答案</div>
+            <div class="legend-item">🔽 提示：每一个颜色格子有一个小ling小orm，每行每列只有一个小ling小orm，每个小ling小orm周围没有其他的小ling小orm</div>
         </div>
     </div>
 </div>
@@ -230,7 +239,7 @@
 
 <script>
     // ==================== 图片资源 ====================
-    // 您可以替换这里的图片地址为您的本地或网络图片
+    // 可以替换这里的图片地址为您的本地或网络图片
     const COW_IMAGES = [
         "ling1.png",
         "ling2.png",
@@ -242,7 +251,7 @@
     // ==================== 游戏状态 ====================
     let N = 5;
     let cowPositions = [];          // {row, col}
-    let cowImagesMap = [];          // 每个对应的图片URL（按索引）
+    let cowImagesMap = [];          // 每个小ling小orm对应的图片URL（按索引）
     let colorGrid = [];             // 颜色编号
     let playerChoices = [];         // 玩家最终选择（验证正确自动加入）
     let manualMarks = [];           // 手动标记的✖️
@@ -424,11 +433,11 @@
             return;
         }
         if (verifiedCorrect.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认有lingorm了！", "error");
+            showMessage("这个格子已经确认有小ling小orm了！", "error");
             return;
         }
         if (verifiedWrong.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认没有lingorm了！", "error");
+            showMessage("这个格子已经确认没有小ling小orm了！", "error");
             return;
         }
 
@@ -448,10 +457,10 @@
                 }
             }
             playerChoices[row][col] = true;
-            showMessage(`✅ 正确！格子 (${row+1},${col+1}) 有lingorm！`, "success");
+            showMessage(`✅ 正确！格子 (${row+1},${col+1}) 有小ling小orm！`, "success");
             if (checkWin()) {
                 gameActive = false;
-                showModal("🎉 胜利！", "恭喜你找到所有lingorm，游戏胜利！");
+                showModal("🎉 胜利！", "恭喜你找到所有小ling小orm，游戏胜利！");
                 showMessage("🎉 胜利！ 🎉", "success");
             }
         } else {
@@ -461,7 +470,7 @@
             }
             attemptsLeft--;
             verifiedWrong.push({ row, col });
-            showMessage(`❌ 错误！格子 (${row+1},${col+1}) 没有lingorm。剩余机会: ${attemptsLeft}`, "error");
+            showMessage(`❌ 错误！格子 (${row+1},${col+1}) 没有小ling小orm。剩余机会: ${attemptsLeft}`, "error");
             boardDiv.classList.add('shake');
             setTimeout(() => boardDiv.classList.remove('shake'), 300);
             if (attemptsLeft === 0) {
@@ -481,17 +490,17 @@
             return;
         }
         if (verifiedCorrect.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经确认有lingorm，不能标记", "error");
+            showMessage("这个格子已经确认有小ling小orm，不能标记", "error");
             return;
         }
         if (verifiedWrong.some(pos => pos.row === row && pos.col === col)) {
-            showMessage("这个格子已经验证过没有lingorm，不能再标记", "error");
+            showMessage("这个格子已经验证过没有小ling小orm，不能再标记", "error");
             return;
         }
         const index = manualMarks.findIndex(m => m.row === row && m.col === col);
         if (index === -1) {
             manualMarks.push({ row, col });
-            showMessage(`✖️ 标记格子 (${row+1},${col+1}) 为无lingorm`, "info");
+            showMessage(`✖️ 标记格子 (${row+1},${col+1}) 为无小ling小orm`, "info");
         } else {
             manualMarks.splice(index, 1);
             showMessage(`取消标记格子 (${row+1},${col+1})`, "info");
@@ -535,6 +544,7 @@
 
     // 渲染网格，支持图片
     function render() {
+        // 动态设置网格列数（保持每列45px，但使用grid布局时由CSS的grid-template-columns控制）
         boardDiv.style.gridTemplateColumns = `repeat(${N}, 45px)`;
         boardDiv.innerHTML = '';
         for (let i = 0; i < N; i++) {
@@ -552,12 +562,12 @@
                 const isPlayerChoice = playerChoices[i][j];
 
                 if (isVerifiedCorrect) {
-                    // 显示图片：找到对应lingorm的图片URL
+                    // 显示图片：找到对应小ling小orm的图片URL
                     const cowIndex = cowPositions.findIndex(cow => cow.row === i && cow.col === j);
                     const imgUrl = cowImagesMap[cowIndex];
                     const img = document.createElement('img');
                     img.src = imgUrl;
-                    img.alt = "🎇";
+                    img.alt = "🎉";
                     cell.appendChild(img);
                     cell.classList.add('cow-correct');
                 } else if (isVerifiedWrong) {
@@ -568,8 +578,8 @@
                     cell.style.fontSize = '24px';
                     cell.style.opacity = '0.7';
                 } else if (isPlayerChoice) {
-                    cell.textContent = '🎇';
-                }
+                    cell.textContent = '🎉';
+                }yanhua
 
                 if (selectedCell && selectedCell.row === i && selectedCell.col === j) {
                     cell.classList.add('selected');
@@ -596,7 +606,7 @@
     function resetGame() {
         N = parseInt(sizeSelect.value, 10);
         cowPositions = generateCows();
-        cowImagesMap = assignCowImages(cowPositions);   // 为每个lingorm分配随机图片
+        cowImagesMap = assignCowImages(cowPositions);   // 为每个小ling小orm分配随机图片
         const singleColor = Math.floor(Math.random() * N);
         colorGrid = generateColorRegions(cowPositions, singleColor);
         playerChoices = Array(N).fill().map(() => Array(N).fill(false));
@@ -608,7 +618,7 @@
         selectedCell = null;
         updateAttemptsDisplay();
         render();
-        showMessage(`新游戏开始！n=${N}，剩余 ${attemptsLeft} 次试错机会。提示：颜色 ${singleColor+1} 只有一个格子。`, "success");
+        showMessage(`新游戏开始！n=${N}，剩余 ${attemptsLeft} 次试错机会。`, "success");
     }
 
     function newGame() {
