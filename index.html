@@ -684,19 +684,16 @@
                     const img = document.createElement('img');
                     img.src = imgUrl;
                     img.alt = "🎉";
-                    img.onerror = () => { img.remove(); cell.textContent = '🎉'; cell.style.fontSize = '28px'; };
+                    img.onerror = () => { img.remove(); cell.textContent = '🎉';  };
                     cell.appendChild(img);
                     cell.classList.add('lingorm-correct');
                 } else if (isVerifiedWrong) {
                     cell.textContent = '❌';
-                    cell.style.fontSize = '26px';
                 } else if (isManualMark) {
                     cell.textContent = '✖️';
-                    cell.style.fontSize = '26px';
                     cell.style.opacity = '0.85';
                 } else if (isPlayerChoice) {
                     cell.textContent = '🎉';
-                    cell.style.fontSize = '28px';
                 }
 
                 if (selectedCell && selectedCell.row === i && selectedCell.col === j) cell.classList.add('selected');
