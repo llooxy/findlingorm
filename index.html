@@ -498,7 +498,7 @@
     function doVibrate() {
         if (!vibrateEnabled) return;
         if (navigator.vibrate) {
-            navigator.vibrate(200);
+            navigator.vibrate([300, 100, 300]);
         }
     }
 
