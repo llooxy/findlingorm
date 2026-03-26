@@ -838,6 +838,21 @@
         showMessage(`✨ 新游戏！棋盘 ${N}x${N}，剩余 ${attemptsLeft} 次验证机会 ✨`, "success");
     }
 
+    function checkVibrationSupport() {
+    const switchesDiv = document.querySelector('.switches');
+        if (!navigator.vibrate) {
+            const tip = document.createElement('div');
+            tip.textContent = '⚠️ 设备不支持震动';
+            tip.style.fontSize = '0.7rem';
+            tip.style.color = '#999';
+            tip.style.marginTop = '4px';
+            tip.style.textAlign = 'center';
+            switchesDiv.appendChild(tip);
+        }
+    }
+    // 页面加载完成后检测
+    window.addEventListener('DOMContentLoaded', checkVibrationSupport);
+
     function showRules() {
         const rulesHtml = `
             <strong>📜 游戏规则</strong><br><br>
