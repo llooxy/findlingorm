@@ -255,7 +255,7 @@
             user-select: none;
             transition: background-color 0.1s ease;
             background-color: #f9f7f5;
-            border-radius: 12px;
+            border-radius: 15%;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
 	  	    min-width: 0;
@@ -439,7 +439,7 @@
 
     <!-- 底部出处 -->
     <div class="footer">
-        <span>@脆皮辣鸡</span>
+        <span>@-脆皮辣鸡-</span>
     </div>
 </div>
 
@@ -456,19 +456,31 @@
     const lingorm_IMAGES = [
         "ling1.png", "orm1.png", "ling2.png", "orm2.png",
         "ling3.png", "orm3.png", "ling4.png", "orm4.png",
-        "ling5.png", "orm5.png","goldie.png","uni.png"
+        "ling5.png", "orm5.png","goldie.png","uni.png","abu.png"
     ];
 	// ========== 音频配置（请替换为您的实际音频路径） ==========
 	// 正确音频列表：根据图片随机索引选择（索引与图片池对应，也可随机）
 	const CORRECT_AUDIO_URLS = [
-	    "audio/correct1.mp3",   // 用户自行替换为实际路径
-	    "audio/correct2.mp3",
-    	"audio/correct3.mp3",
-    	"audio/correct4.mp3",
-    	"audio/correct5.mp3"
+	    "audio/ling1.mp3", 
+		"audio/orm1.mp3", 
+	    "audio/ling2.mp3",
+		"audio/orm2.mp3",
+    	"audio/ling3.mp3",
+		"audio/orm3.mp3",
+    	"audio/ling4.mp3",
+		"audio/orm4.mp3",
+    	"audio/ling5.mp3",
+		"audio/orm5.mp3",
+		"audio/goldie.mp3",
+		"audio/uni.mp3",
+		"audio/abu1.mp3"
 	];
 	// 错误音频
-	const ERROR_AUDIO_URL = "audio/error.mp3";
+	const ERROR_AUDIO_URLS = ["audio/wrong1.mp3","audio/wrong2.mp3"];
+	//失败
+	const LOSE_AUDIO_URL = "audio/lose.mp3";
+	//成功
+	const WIN_AUDIO_URL = "audio/win.mp3";
 
 	// 如果不需要区分图片，只想随机选择正确音频，可将下面参数设为 true
 	const RANDOM_CORRECT_AUDIO = false;   // true: 随机从列表中选； false: 根据图片索引取模
@@ -496,11 +508,30 @@
     // 播放错误音频
     function playErrorAudio() {
         if (!soundEnabled) return;
-        if (!ERROR_AUDIO_URL) return;
-        const audio = new Audio(ERROR_AUDIO_URL);
+        if (!ERROR_AUDIO_URLS.length) return;
+	let audioUrl;
+		const randomIdx = Math.floor(Math.random() * ERROR_AUDIO_URLS.length);
+		audioUrl = ERROR_AUDIO_URLS[randomIdx];
+        const audio = new Audio(audioUrl);
         audio.play().catch(e => console.warn("音频播放失败", e));
     }
 
+	// 播放失败音频
+    function playLoseAudio() {
+        if (!soundEnabled) return;
+        if (!LOSE_AUDIO_URL) return;
+		const audio = new Audio(LOSE_AUDIO_URL);
+        audio.play().catch(e => console.warn("音频播放失败", e));
+	}
+
+	// 播放成功音频
+    function playWinAudio() {
+        if (!soundEnabled) return;
+        if (!WIN_AUDIO_URL) return;
+		const audio = new Audio(WIN_AUDIO_URL);
+        audio.play().catch(e => console.warn("音频播放失败", e));
+    }
+	
     // 震动
     function doVibrate() {
         if (!vibrateEnabled) return;
@@ -588,7 +619,8 @@
     }
 
     function assignLingormImages(lingorms) {
-        return lingorms.map(() => lingorm_IMAGES[Math.floor(Math.random() * lingorm_IMAGES.length)]);
+	// 每个格子使用其在 lingormPositions 中的索引对图片列表取模，保证索引一致
+    	return lingorms.map((_, idx) => lingorm_IMAGES[idx % lingorm_IMAGES.length]);
     }
 
     function getNeighbors(row, col) {
@@ -715,11 +747,15 @@
             }
             playerChoices[row][col] = true;
             showMessage(`✅ 正确！(${row+1},${col+1}) 找到了lingorm！`, "success");
-			playCorrectAudio(lingormIndex);
+	    playCorrectAudio(lingormIndex); 
             if (checkWin()) {
                 gameActive = false;
                 showModal("🎉 胜利！", "恭喜你集齐所有lingorm，推理满分！");
                 showMessage("🎉 胜利！游戏通关 🎉", "success");
+		if (!window._winAudioPlayed) {   // 避免重复播放
+        		window._winAudioPlayed = true;
+        		setTimeout(() => playWinAudio(), 3500);
+    		}
             }
         } else {
             if (attemptsLeft <= 0) { showMessage("已经没有试错机会了，开新局吧", "error"); return; }
@@ -733,6 +769,10 @@
                 gameActive = false;
                 showModal("💩 挑战失败", "机会用尽啦！点击新游戏继续挑战~");
                 showMessage("💩 试错机会耗尽，游戏失败", "error");
+		if (!window._loseAudioPlayed) {
+        		window._loseAudioPlayed = true;
+        		setTimeout(() => playLoseAudio(), 3500);
+    		}
             }
         }
         updateAttemptsDisplay();
@@ -844,6 +884,8 @@
         verifiedWrong = [];
         verifiedCorrect = [];
         attemptsLeft = Math.max(2, N - 2);
+	window._winAudioPlayed = false;
+	window._loseAudioPlayed = false;
         gameActive = true;
         selectedCell = null;
         updateAttemptsDisplay();
@@ -858,7 +900,8 @@
             💡 <strong>单击</strong> 可以手动标记 ✖️ 来记录排除项
             💡 <strong>双击</strong> 可以查看格子有没有小ling或小orm
             💡 双击如果出现 ❌ 表示错误，会消耗一次错误机会
-	    💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！<br>
+	    	💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！<br>
+			💡iOS暂不支持震动反馈
             <strong>🔍 推理三要素：</strong>
             1️⃣ 每行只有一个小ling或小orm。
             2️⃣ 每列只有一个小ling或小orm。
