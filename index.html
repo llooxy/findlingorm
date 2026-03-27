@@ -551,6 +551,7 @@
 	
     // ---------- 游戏核心变量 ----------
     let N = 5;
+    let lingormImageIndices = [];   // 存储每个正确格子对应的随机图片索引，-1表示未确定
     let lingormPositions = [];
     let lingormImagesMap = [];
     let colorGrid = [];
@@ -747,6 +748,12 @@
                 }
             }
             playerChoices[row][col] = true;
+
+	    // ===== 新增：生成随机索引并存储 =====
+    	    const randomIdx = Math.floor(Math.random() * lingorm_IMAGES.length);
+    	    const cellIndex = row * N + col;
+    	    lingormImageIndices[cellIndex] = randomIdx;
+
             showMessage(`✅ 正确！(${row+1},${col+1}) 找到了lingorm！`, "success");
             if (checkWin()) {
                 gameActive = false;
@@ -754,11 +761,11 @@
                 showMessage("🎉 胜利！游戏通关 🎉", "success");
 		if (!window._winAudioPlayed) {   // 避免重复播放
         		window._winAudioPlayed = true;
-        		setTimeout(() => playWinAudio(), 200);
+        		setTimeout(() => playWinAudio(), 10);
     		}
             }else
 		{
-			playCorrectAudio(lingormIndex); 
+			playCorrectAudio(randomIdx); 
 		}
         } else {
             if (attemptsLeft <= 0) { showMessage("已经没有试错机会了，开新局吧", "error"); return; }
@@ -774,7 +781,7 @@
                 showMessage("💩 试错机会耗尽，游戏失败", "error");
 		if (!window._loseAudioPlayed) {
         		window._loseAudioPlayed = true;
-        		setTimeout(() => playLoseAudio(), 200);
+        		setTimeout(() => playLoseAudio(), 10);
     		}
             }else
 		{
@@ -840,8 +847,11 @@
                 const isPlayerChoice = playerChoices[i][j];
 
                 if (isVerifiedCorrect) {
-                    const lingormIdx = lingormPositions.findIndex(lingorm => lingorm.row === i && lingorm.col === j);
-                    const imgUrl = lingormImagesMap[lingormIdx];
+                    const cellIndex = i * N + j;
+    		    const randomIdx = lingormImageIndices[cellIndex];
+                    const imgUrl = (randomIdx >= 0 && randomIdx < lingorm_IMAGES.length) 
+                    ? lingorm_IMAGES[randomIdx] 
+                    : lingorm_IMAGES[0];
                     const img = document.createElement('img');
                     img.src = imgUrl;
                     img.alt = "🎉";
@@ -882,7 +892,6 @@
     function resetGame() {
         N = parseInt(sizeSelect.value, 10);
         lingormPositions = generateLingormPositions();
-        lingormImagesMap = assignLingormImages(lingormPositions);
         const singleColor = Math.floor(Math.random() * N);
         colorGrid = generateColorRegions(lingormPositions, singleColor);
         playerChoices = Array(N).fill().map(() => Array(N).fill(false));
@@ -894,6 +903,7 @@
 	window._loseAudioPlayed = false;
         gameActive = true;
         selectedCell = null;
+	lingormImageIndices = Array(N * N).fill(-1);
         updateAttemptsDisplay();
         render();
         showMessage(`✨ 新游戏！棋盘 ${N}x${N}，剩余 ${attemptsLeft} 次验证机会 ✨`, "success");
@@ -906,8 +916,8 @@
             💡 <strong>单击</strong> 可以手动标记 ✖️ 来记录排除项
             💡 <strong>双击</strong> 可以查看格子有没有小ling或小orm
             💡 双击如果出现 ❌ 表示错误，会消耗一次错误机会
-	    	💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！
-	    	💡 iOS暂不支持震动反馈<br>
+	    💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！
+	    💡iOS暂不支持震动反馈<br>
             <strong>🔍 推理三要素：</strong>
             1️⃣ 每行只有一个小ling或小orm。
             2️⃣ 每列只有一个小ling或小orm。
