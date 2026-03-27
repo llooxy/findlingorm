@@ -255,7 +255,7 @@
             user-select: none;
             transition: background-color 0.1s ease;
             background-color: #f9f7f5;
-            border-radius: 15%;
+            border-radius: 20%;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
 	  	    min-width: 0;
@@ -406,7 +406,7 @@
                 <option value="10">10x10</option>
                 <option value="11">11x11</option>
                 <option value="12">12x12</option>
-				<option value="13">13x13</option>
+		<option value="13">13x13</option>
             </select>
         </label>
         <button id="newGameBtn">✨ 新游戏</button>
@@ -430,7 +430,7 @@
     <div class="info-top">
         <div id="message" class="message">💡 单击标记✖️，双击验证（错误会消耗机会）</div>
         <div class="legend">
-            <div class="legend-item">✨有机会出现狗妹和uni哦！</div>
+            <div class="legend-item">✨有机会出现狗妹、uni还有abu哦！</div>
         </div>
     </div>
 
@@ -439,7 +439,7 @@
 
     <!-- 底部出处 -->
     <div class="footer">
-        <span>@-脆皮辣鸡-</span>
+        <span>@脆皮辣鸡</span>
     </div>
 </div>
 
@@ -461,15 +461,15 @@
 	// ========== 音频配置（请替换为您的实际音频路径） ==========
 	// 正确音频列表：根据图片随机索引选择（索引与图片池对应，也可随机）
 	const CORRECT_AUDIO_URLS = [
-	    "audio/ling1.mp3", 
+	    	"audio/ling1.mp3", 
 		"audio/orm1.mp3", 
-	    "audio/ling2.mp3",
+	    	"audio/ling2.mp3",
 		"audio/orm2.mp3",
-    	"audio/ling3.mp3",
+    		"audio/ling3.mp3",
 		"audio/orm3.mp3",
-    	"audio/ling4.mp3",
+    		"audio/ling4.mp3",
 		"audio/orm4.mp3",
-    	"audio/ling5.mp3",
+    		"audio/ling5.mp3",
 		"audio/orm5.mp3",
 		"audio/goldie.mp3",
 		"audio/uni.mp3",
@@ -486,6 +486,7 @@
 	const RANDOM_CORRECT_AUDIO = false;   // true: 随机从列表中选； false: 根据图片索引取模
 
 	// ---------- 音效播放（使用HTML Audio）----------
+	let audioCtx = null;
     let soundEnabled = true;
     let vibrateEnabled = true;
 
@@ -599,7 +600,7 @@
         remainingAttemptsSpan.textContent = attemptsLeft;
     }
 
-    // ---------- 核心生成算法（保持原逻辑）----------
+    // ---------- 核心生成算法----------
     function generateLingormPositions() {
         while (true) {
             let perm = [...Array(N).keys()];
@@ -747,16 +748,18 @@
             }
             playerChoices[row][col] = true;
             showMessage(`✅ 正确！(${row+1},${col+1}) 找到了lingorm！`, "success");
-	    playCorrectAudio(lingormIndex); 
             if (checkWin()) {
                 gameActive = false;
                 showModal("🎉 胜利！", "恭喜你集齐所有lingorm，推理满分！");
                 showMessage("🎉 胜利！游戏通关 🎉", "success");
 		if (!window._winAudioPlayed) {   // 避免重复播放
         		window._winAudioPlayed = true;
-        		setTimeout(() => playWinAudio(), 3500);
+        		setTimeout(() => playWinAudio(), 200);
     		}
-            }
+            }else
+		{
+			playCorrectAudio(lingormIndex); 
+		}
         } else {
             if (attemptsLeft <= 0) { showMessage("已经没有试错机会了，开新局吧", "error"); return; }
             attemptsLeft--;
@@ -764,16 +767,19 @@
             showMessage(`❌ 错误！(${row+1},${col+1}) 没有lingorm，剩余机会: ${attemptsLeft}`, "error");
             boardDiv.classList.add('shake');
             setTimeout(() => boardDiv.classList.remove('shake'), 300);
-			playErrorAudio();
+		doVibrate();
             if (attemptsLeft === 0) {
                 gameActive = false;
                 showModal("💩 挑战失败", "机会用尽啦！点击新游戏继续挑战~");
                 showMessage("💩 试错机会耗尽，游戏失败", "error");
 		if (!window._loseAudioPlayed) {
         		window._loseAudioPlayed = true;
-        		setTimeout(() => playLoseAudio(), 3500);
+        		setTimeout(() => playLoseAudio(), 200);
     		}
-            }
+            }else
+		{
+			playErrorAudio();
+		}
         }
         updateAttemptsDisplay();
         render();
@@ -900,8 +906,8 @@
             💡 <strong>单击</strong> 可以手动标记 ✖️ 来记录排除项
             💡 <strong>双击</strong> 可以查看格子有没有小ling或小orm
             💡 双击如果出现 ❌ 表示错误，会消耗一次错误机会
-	    	💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！<br>
-			💡iOS暂不支持震动反馈
+	    	💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！
+	    	💡 iOS暂不支持震动反馈<br>
             <strong>🔍 推理三要素：</strong>
             1️⃣ 每行只有一个小ling或小orm。
             2️⃣ 每列只有一个小ling或小orm。
