@@ -109,6 +109,57 @@
             padding: 8px 20px;
         }
 
+		.switches {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: #fff8e7;
+            padding: 8px 16px;
+            border-radius: 60px;
+        }
+
+        .switch-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .switch-item input {
+            width: 36px;
+            height: 20px;
+            appearance: none;
+            background: #cbd5e1;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+            outline: none;
+        }
+
+        .switch-item input:checked {
+            background: #667eea;
+        }
+
+        .switch-item input::before {
+            content: "";
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            transition: 0.2s;
+        }
+
+        .switch-item input:checked::before {
+            left: 17px;
+        }
+
         .remaining-attempts {
             background: #fff3e0;
             border-radius: 60px;
@@ -204,10 +255,12 @@
             user-select: none;
             transition: background-color 0.1s ease;
             background-color: #f9f7f5;
-            border-radius: 12px;
+            border-radius: 20%;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
-			min-width: 0;
+	  	    min-width: 0;
+	    	line-height: 1;             /* 消除行高引起的额外高度 */
+    	    font-size: clamp(12px, 6vw, 26px); /* 自动适应：最小12px，最大26px，按屏幕宽度6% */
         }
 
         .cell:active {
@@ -328,17 +381,12 @@
                 font-size: 0.8rem;
                 padding: 4px 14px;
             }
-        }
-
-        @media (max-width: 450px) {
-            .cell {
-                font-size: 20px;
+			.switches {
+                gap: 12px;
+                padding: 6px 12px;
             }
-            .info-top {
-                padding: 8px 10px;
-            }
-            .modal-content {
-                padding: 20px 16px;
+            .switch-item {
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -358,6 +406,7 @@
                 <option value="10">10x10</option>
                 <option value="11">11x11</option>
                 <option value="12">12x12</option>
+		<option value="13">13x13</option>
             </select>
         </label>
         <button id="newGameBtn">✨ 新游戏</button>
@@ -366,6 +415,14 @@
     <!-- 规则按钮 + 剩余机会显示 -->
     <div class="rule-area">
         <button id="ruleBtn" class="rule-btn">📖 游戏规则</button>
+		<div class="switches">
+            <label class="switch-item">
+                <input type="checkbox" id="soundToggle" checked> 🔊 音效
+            </label>
+            <label class="switch-item">
+                <input type="checkbox" id="vibrateToggle" checked> 📳 震动
+            </label>
+        </div>
         <div class="remaining-attempts">剩余错误机会: <span id="remainingAttemptsSpan">0</span> 次</div>
     </div>
 
@@ -373,7 +430,7 @@
     <div class="info-top">
         <div id="message" class="message">💡 单击标记✖️，双击验证（错误会消耗机会）</div>
         <div class="legend">
-            <div class="legend-item">✨有机会出现狗妹和uni哦！</div>
+            <div class="legend-item">✨有机会出现狗妹、uni还有abu哦！</div>
         </div>
     </div>
 
@@ -399,11 +456,102 @@
     const lingorm_IMAGES = [
         "ling1.png", "orm1.png", "ling2.png", "orm2.png",
         "ling3.png", "orm3.png", "ling4.png", "orm4.png",
-        "ling5.png", "orm5.png","goldie.png","uni.png"
+        "ling5.png", "orm5.png","goldie.png","uni.png","abu.png"
     ];
+	// ========== 音频配置（请替换为您的实际音频路径） ==========
+	// 正确音频列表：根据图片随机索引选择（索引与图片池对应，也可随机）
+	const CORRECT_AUDIO_URLS = [
+	    	"audio/ling1.mp3", 
+		"audio/orm1.mp3", 
+	    	"audio/ling2.mp3",
+		"audio/orm2.mp3",
+    		"audio/ling3.mp3",
+		"audio/orm3.mp3",
+    		"audio/ling4.mp3",
+		"audio/orm4.mp3",
+    		"audio/ling5.mp3",
+		"audio/orm5.mp3",
+		"audio/goldie.mp3",
+		"audio/uni.mp3",
+		"audio/abu1.mp3"
+	];
+	// 错误音频
+	const ERROR_AUDIO_URLS = ["audio/wrong1.mp3","audio/wrong2.mp3"];
+	//失败
+	const LOSE_AUDIO_URL = "audio/lose.mp3";
+	//成功
+	const WIN_AUDIO_URL = "audio/win.mp3";
 
+	// 如果不需要区分图片，只想随机选择正确音频，可将下面参数设为 true
+	const RANDOM_CORRECT_AUDIO = false;   // true: 随机从列表中选； false: 根据图片索引取模
+
+	// ---------- 音效播放（使用HTML Audio）----------
+	let audioCtx = null;
+    let soundEnabled = true;
+    let vibrateEnabled = true;
+
+	// 播放正确音频（根据格子对应的图片索引选择）
+    function playCorrectAudio(lingormIndex) {
+        if (!soundEnabled) return;
+        if (!CORRECT_AUDIO_URLS.length) return;
+        let audioUrl;
+        if (RANDOM_CORRECT_AUDIO) {
+            const randomIdx = Math.floor(Math.random() * CORRECT_AUDIO_URLS.length);
+            audioUrl = CORRECT_AUDIO_URLS[randomIdx];
+        } else {
+            const idx = lingormIndex % CORRECT_AUDIO_URLS.length;
+            audioUrl = CORRECT_AUDIO_URLS[idx];
+        }
+        const audio = new Audio(audioUrl);
+        audio.play().catch(e => console.warn("音频播放失败", e));
+    }
+
+    // 播放错误音频
+    function playErrorAudio() {
+        if (!soundEnabled) return;
+        if (!ERROR_AUDIO_URLS.length) return;
+	let audioUrl;
+		const randomIdx = Math.floor(Math.random() * ERROR_AUDIO_URLS.length);
+		audioUrl = ERROR_AUDIO_URLS[randomIdx];
+        const audio = new Audio(audioUrl);
+        audio.play().catch(e => console.warn("音频播放失败", e));
+    }
+
+	// 播放失败音频
+    function playLoseAudio() {
+        if (!soundEnabled) return;
+        if (!LOSE_AUDIO_URL) return;
+		const audio = new Audio(LOSE_AUDIO_URL);
+        audio.play().catch(e => console.warn("音频播放失败", e));
+	}
+
+	// 播放成功音频
+    function playWinAudio() {
+        if (!soundEnabled) return;
+        if (!WIN_AUDIO_URL) return;
+		const audio = new Audio(WIN_AUDIO_URL);
+        audio.play().catch(e => console.warn("音频播放失败", e));
+    }
+	
+    // 震动
+    function doVibrate() {
+        if (!vibrateEnabled) return;
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
+    }
+
+	// 开关控制
+    const soundToggle = document.getElementById('soundToggle');
+    const vibrateToggle = document.getElementById('vibrateToggle');
+    soundToggle.addEventListener('change', (e) => { soundEnabled = e.target.checked; });
+    vibrateToggle.addEventListener('change', (e) => { vibrateEnabled = e.target.checked; });
+    soundEnabled = soundToggle.checked;
+    vibrateEnabled = vibrateToggle.checked;
+	
     // ---------- 游戏核心变量 ----------
     let N = 5;
+    let lingormImageIndices = [];   // 存储每个正确格子对应的随机图片索引，-1表示未确定
     let lingormPositions = [];
     let lingormImagesMap = [];
     let colorGrid = [];
@@ -453,7 +601,7 @@
         remainingAttemptsSpan.textContent = attemptsLeft;
     }
 
-    // ---------- 核心生成算法（保持原逻辑）----------
+    // ---------- 核心生成算法----------
     function generateLingormPositions() {
         while (true) {
             let perm = [...Array(N).keys()];
@@ -473,7 +621,8 @@
     }
 
     function assignLingormImages(lingorms) {
-        return lingorms.map(() => lingorm_IMAGES[Math.floor(Math.random() * lingorm_IMAGES.length)]);
+	// 每个格子使用其在 lingormPositions 中的索引对图片列表取模，保证索引一致
+    	return lingorms.map((_, idx) => lingorm_IMAGES[idx % lingorm_IMAGES.length]);
     }
 
     function getNeighbors(row, col) {
@@ -599,12 +748,25 @@
                 }
             }
             playerChoices[row][col] = true;
+
+	    // ===== 新增：生成随机索引并存储 =====
+    	    const randomIdx = Math.floor(Math.random() * lingorm_IMAGES.length);
+    	    const cellIndex = row * N + col;
+    	    lingormImageIndices[cellIndex] = randomIdx;
+
             showMessage(`✅ 正确！(${row+1},${col+1}) 找到了lingorm！`, "success");
             if (checkWin()) {
                 gameActive = false;
                 showModal("🎉 胜利！", "恭喜你集齐所有lingorm，推理满分！");
                 showMessage("🎉 胜利！游戏通关 🎉", "success");
-            }
+		if (!window._winAudioPlayed) {   // 避免重复播放
+        		window._winAudioPlayed = true;
+        		setTimeout(() => playWinAudio(), 10);
+    		}
+            }else
+		{
+			playCorrectAudio(randomIdx); 
+		}
         } else {
             if (attemptsLeft <= 0) { showMessage("已经没有试错机会了，开新局吧", "error"); return; }
             attemptsLeft--;
@@ -612,11 +774,19 @@
             showMessage(`❌ 错误！(${row+1},${col+1}) 没有lingorm，剩余机会: ${attemptsLeft}`, "error");
             boardDiv.classList.add('shake');
             setTimeout(() => boardDiv.classList.remove('shake'), 300);
+		doVibrate();
             if (attemptsLeft === 0) {
                 gameActive = false;
                 showModal("💩 挑战失败", "机会用尽啦！点击新游戏继续挑战~");
                 showMessage("💩 试错机会耗尽，游戏失败", "error");
-            }
+		if (!window._loseAudioPlayed) {
+        		window._loseAudioPlayed = true;
+        		setTimeout(() => playLoseAudio(), 10);
+    		}
+            }else
+		{
+			playErrorAudio();
+		}
         }
         updateAttemptsDisplay();
         render();
@@ -677,24 +847,24 @@
                 const isPlayerChoice = playerChoices[i][j];
 
                 if (isVerifiedCorrect) {
-                    const lingormIdx = lingormPositions.findIndex(lingorm => lingorm.row === i && lingorm.col === j);
-                    const imgUrl = lingormImagesMap[lingormIdx];
+                    const cellIndex = i * N + j;
+    		    const randomIdx = lingormImageIndices[cellIndex];
+                    const imgUrl = (randomIdx >= 0 && randomIdx < lingorm_IMAGES.length) 
+                    ? lingorm_IMAGES[randomIdx] 
+                    : lingorm_IMAGES[0];
                     const img = document.createElement('img');
                     img.src = imgUrl;
                     img.alt = "🎉";
-                    img.onerror = () => { img.remove(); cell.textContent = '🎉'; cell.style.fontSize = '28px'; };
+                    img.onerror = () => { img.remove(); cell.textContent = '🎉';  };
                     cell.appendChild(img);
                     cell.classList.add('lingorm-correct');
                 } else if (isVerifiedWrong) {
                     cell.textContent = '❌';
-                    cell.style.fontSize = '26px';
                 } else if (isManualMark) {
                     cell.textContent = '✖️';
-                    cell.style.fontSize = '26px';
                     cell.style.opacity = '0.85';
                 } else if (isPlayerChoice) {
                     cell.textContent = '🎉';
-                    cell.style.fontSize = '28px';
                 }
 
                 if (selectedCell && selectedCell.row === i && selectedCell.col === j) cell.classList.add('selected');
@@ -722,7 +892,6 @@
     function resetGame() {
         N = parseInt(sizeSelect.value, 10);
         lingormPositions = generateLingormPositions();
-        lingormImagesMap = assignLingormImages(lingormPositions);
         const singleColor = Math.floor(Math.random() * N);
         colorGrid = generateColorRegions(lingormPositions, singleColor);
         playerChoices = Array(N).fill().map(() => Array(N).fill(false));
@@ -730,8 +899,11 @@
         verifiedWrong = [];
         verifiedCorrect = [];
         attemptsLeft = Math.max(2, N - 2);
+	window._winAudioPlayed = false;
+	window._loseAudioPlayed = false;
         gameActive = true;
         selectedCell = null;
+	lingormImageIndices = Array(N * N).fill(-1);
         updateAttemptsDisplay();
         render();
         showMessage(`✨ 新游戏！棋盘 ${N}x${N}，剩余 ${attemptsLeft} 次验证机会 ✨`, "success");
@@ -744,7 +916,8 @@
             💡 <strong>单击</strong> 可以手动标记 ✖️ 来记录排除项
             💡 <strong>双击</strong> 可以查看格子有没有小ling或小orm
             💡 双击如果出现 ❌ 表示错误，会消耗一次错误机会
-	    💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！<br>
+	    💡 <strong>电脑</strong>可以缩小浏览器窗口开始游戏！
+	    💡iOS暂不支持震动反馈<br>
             <strong>🔍 推理三要素：</strong>
             1️⃣ 每行只有一个小ling或小orm。
             2️⃣ 每列只有一个小ling或小orm。
